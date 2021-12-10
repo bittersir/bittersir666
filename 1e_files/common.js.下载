@@ -1,0 +1,97 @@
+
+function initScroll(){
+	// 最后一个li去掉边框
+	setInitCss();
+	// 页面滚动问题
+	setTimeout(function() {
+		
+		myscroll = new iScroll("wrapper");
+		return myscroll;
+	}, 100);
+}
+
+
+//带分页的滚动条
+function initPagerScroll(){
+	
+	// 页面滚动问题
+	setTimeout(function() {
+		
+		jQuery("#wrapper").data({"load":false,"loading":false});
+		 myscroll = new iScroll("wrapper",{
+			useTransition: false,
+			onScrollMove: function(){
+				if (this.y < this.maxScrollY && !jQuery("#wrapper").data("load") && !jQuery("#wrapper").data("loading")){
+					jQuery("#wrapper").data("load",true);
+				}
+			},
+			onScrollEnd:  function(){
+					
+				if (jQuery("#wrapper").data("load")){
+					jQuery("#wrapper").data("load",false);
+					jQuery("#wrapper").data("loading",true);
+					
+					var max = jQuery("#pageNum").text(); // 记录总数
+					var cur = jQuery("#search_show").children().length; // 当前页面上的记录数
+					if(cur < max){
+						loadData(jQuery("#wrapper").data("pageNum")+1);
+					}
+					
+					setTimeout(function() {
+						myscroll.refresh();
+					},0);
+				}
+			}
+		});
+		return myscroll;
+	}, 100);
+}
+
+//最后一个li去掉边框
+function setInitCss(){
+	$(".ul_bor li:last-child").css("border-bottom-width","0px");
+	$(".ul_noborder li:last-child").css("border-bottom-width","0px");
+	//$(".form2_zt li:last-child").css("backgroundImage","url("+stylePath+"/images/ico4x.png)");
+}
+
+function adderror(text){
+	layer.alert(text,{title:"提示",closeBtn:false});
+}
+function addMsg(text,url){
+	layer.confirm(text, {
+	  btn: ['确定'] //按钮
+      ,title:"提示"
+	  ,closeBtn:false
+	}, function(){
+	  document.location.href = url;
+	});
+}
+function addConfirmMsg(text,url){
+	layer.confirm(text, {
+	  btn: ['确定','关闭'] //按钮
+	  ,title:"提示"
+	  ,closeBtn:false
+	}, function(){
+	  document.location.href = url;
+	});
+	
+}
+function removeConfirm(text){
+	if($(".confirmDialog").length > 0){
+	//	$(".loadingDialog").animate({top:"0"});
+		$(".confirmDialog").remove();		
+	}
+	if($(".fishDialogMask").length > 0){
+		$(".fishDialogMask").remove();
+	}
+}
+
+function removeerror(text){
+	if($(".loadingDialog").length > 0){
+	//	$(".loadingDialog").animate({top:"0"});
+		$(".loadingDialog").remove();		
+	}
+	if($(".fishDialogMask").length > 0){
+		$(".fishDialogMask").remove();
+	}
+}

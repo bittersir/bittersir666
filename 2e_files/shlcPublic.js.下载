@@ -1,0 +1,124 @@
+
+function lccx(sqid) {
+	if(sqid == null){
+		return;
+	}
+	var url = "ydxg_comm_spl.do?method=getSplcList&sqid="+sqid+"&timestamp="+new Date().getTime();
+	jQuery.post(url, {}, function(data) {
+		var dataList = data;
+		setLcxx(dataList);
+		myscroll = initScroll();
+		}, 'json');
+}
+
+/*
+ * 流程信息
+ */
+function setLcxx(dataList) {
+	if (dataList == null) {
+		return;
+	}
+	var sHtml = "";
+	for ( var i = 0; i < dataList.length; i++) {
+		var o = dataList[i];
+		var mc = o.mc;
+		var shr = o.shr;
+		var shyj = o.shyj;
+		var shsj = o.shsj;
+		var shzt = o.shzt;
+		var zd1 = (o.zd1=='null' || !o.zd1) ? "" :o.zd1;
+		var zd3 = (o.zd3=='null' || !o.zd3) ? "" :o.zd3;
+		var shztClass = "";
+		var shztmc = ""	;
+		if (shzt == "0") {
+			shztClass = "zt2";
+			shztmc = "待审核";
+		} else if (shzt == "1") {
+			shztClass = "zt2";
+			shztmc = "审核通过";
+		} else if (shzt == "2") {
+			shztClass = "zt2";
+			shztmc = "审核不通过";
+		} else if (shzt == "3") {
+			shztClass = "zt2";
+			shztmc = "已退回";
+		} else if (shzt == "4") {
+			shztClass = "zt2";
+			shztmc = "需重审";
+		} else if (shzt == "5") {
+			shztClass = "zt2";
+			shztmc = "审核中";
+		}else if (shzt == "9") {
+			shztClass = "zt2";
+			shztmc = "取消审核";
+		} else {
+			shztClass = "zt1";
+		}
+		if(mc == null){
+			mc = "";
+		}
+		if(shr == null){
+			shr = "";
+		}
+		if(shsj == null){
+			shsj = "";
+		}
+		sHtml = "";
+		if(i == dataList.length - 1){
+			if(shzt == "1"){
+				sHtml += "<li  class='zt2'>";
+			}else{
+				sHtml += "<li  class='zt1'>";
+			}
+		}else{
+			sHtml += "<li>";
+		}
+		
+		sHtml += "<p class='name'>";
+		sHtml += mc + " " + shr + " " + shztmc;
+		sHtml += "</p>";
+		if (shzt != "0") {
+			if (zd1) {
+				sHtml += "<p class='name'>";
+				sHtml += zd1 + ":" + zd3;
+				sHtml += "</p>";
+			}
+		}
+		if (shzt == "1" || shzt == "2" || shzt == "3") {
+			sHtml += "<p class='name'>";
+			sHtml += "审核意见:" + shyj;
+			sHtml += "</p>";
+		}
+		sHtml += "<p class='time'>";
+		sHtml += shsj;
+		if(shsj == ""){
+			sHtml += "<br/>";
+		}
+		sHtml += "</p>";
+		sHtml += "</li>";
+		//console.log(sHtml);
+		$("#wrapper .form2_zt").append(sHtml);
+	}
+}
+
+function getShztmc(shzt){
+	var shztmc = ""	;
+	if (shzt == "0") {
+		shztmc = "待审核";
+	} else if (shzt == "1") {
+		shztmc = "审核通过";
+	} else if (shzt == "2") {
+		shztmc = "审核不通过";
+	} else if (shzt == "3") {
+		shztmc = "已退回";
+	} else if (shzt == "4") {
+		shztmc = "需重审";
+	} else if (shzt == "5") {
+		shztmc = "审核中";
+	}else if (shzt == "9") {
+		shztmc = "取消审核";
+	} else {
+		shztmc = "审核中";
+	}
+	return shztmc;
+}

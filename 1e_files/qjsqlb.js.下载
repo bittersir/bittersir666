@@ -1,0 +1,100 @@
+var myscroll;
+var dataList;
+var xxdm="";
+jQuery(function() {
+	xxdm=jQuery("#xxdm").val();
+	returnClient();
+	onShow();
+});
+
+function onShow(pageNum) {
+	var p = pageNum || 1;
+	var url = "ydxg_qjsqbase.do?method=list&type=query";
+	jQuery.post(url, getSuperSearch(p), function(data) {
+		dataList = data;
+		setInit();// 设置初值
+		myscroll = initScroll();
+		}, 'json');
+}
+
+// 设置初值
+function setInit() {
+	if (dataList == null || dataList.length == 0) {
+		$("#wrapper .mainframe1").append(getNullDataTip());			
+		return;
+	}
+	var sHtml = "";
+	for ( var i = 0; i < dataList.length; i++) {
+		var o = dataList[i];
+		var kssj = o.kssj;
+		var jssj = o.jssj;
+		var qjlxmc = o.qjlxmc;
+		var qjts = o.qjts;
+		var qjsy = o.qjsy;
+		var qjsqid = o.qjsqid;
+		var shztmc = o.shztmc;
+		var shzt = o.shzt;
+		var shztClass = "";
+		if(shzt == "1"){
+			shztClass = "zt2";
+		}else{
+			shztClass = "zt1";
+		}
+		var href = "ydxg_comm_spl.do?method=lccx&sqid=" + qjsqid
+		+ "&timestamp=" + new Date().getTime();
+		sHtml = "";
+		sHtml += "<div class='list3'>";
+		sHtml += "<h3 class='title'>" + o.xm + "/" + o.xh +"/"+o.bjmc+"</h3>";
+		sHtml += "<ul class='ul_noborder'>";
+		sHtml += "<li><span>时间</span><p>" + kssj + "~" + jssj + "</p></li>";
+		sHtml += "<li><span>天数</span><p>" + qjts + "天</p></li>";
+		sHtml += "<li><span>类型</span><p>" + qjlxmc + "</p></li>";
+		//徐州医药高等专科学校
+		if(xxdm == '70002'){
+			sHtml += "<li><span>校内校外</span><p>" + o.xnxw + "</p></li>";
+		}
+//		sHtml += "<li><span>事由</span><p>" + qjsy + "</p></li>";
+		if(xxdm=="12866"&&"1"==o.sfcs){
+			sHtml += "<li><span style=\"font:normal 15px/30px microsoft YaHei !important; color:red !important;\">审核超时</span>";
+		}else{
+		sHtml += "<li><span class='yel'>" + shztmc + "</span>";
+		}
+		if (shzt == "0" || shzt == "3"){
+			sHtml += "<a href='ydxg_qjsq.do?method=edit&qjsqid="+qjsqid+"' class='but_blue float_r'>修改</a>";
+		} else {
+			sHtml += "<a href='ydxg_qjsq.do?method=showView&qjsqid="+qjsqid+"' class='but_blue float_r margin_l'>查看详情</a>";
+			if(shzt == '5'){
+				sHtml += "<a href=\"javascript:cancelAudit(\'"+qjsqid+"\',\'"+o.splcid+"\');\" class='but_blue float_r'>撤消</a>";
+			}
+		}
+		sHtml += "</li>";
+		sHtml += "</ul>";
+		sHtml += "</div>";
+		$("#wrapper .mainframe1").append(sHtml);
+	}
+}
+
+function getSuperSearch(p){
+
+ 	var map = {
+		"pages.pageSize":"10",
+		"pages.sortName":"sqsj",
+		"pages.sortOrder":"desc",
+ 	    "pages.currentPage":p
+	};
+	return map;
+}
+
+//撤销
+function cancelAudit(values,lcid){
+	layer.confirm("确定撤销吗？", {
+		  btn: ['确定','关闭'] //按钮
+		  ,title:"提示"
+		  ,closeBtn:false
+		}, function(){
+			jQuery.post("ydxg_qjsq.do?method=cancle",{values:values,lcid:lcid},function(result){
+				addMsg(result["message"],"ydxg_qjsqbase.do");
+			},'json');
+	}
+	);
+}

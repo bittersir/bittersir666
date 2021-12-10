@@ -1,0 +1,337 @@
+var obj = "";
+var global_variable_isIOS="";
+function select() {
+	//手机端选择图片
+	//判断是否安卓系统
+	var sfAndroid = window.navigator.userAgent.toLowerCase().match(/android/i) == "android";
+	 var isiOS = !!window.navigator.userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+	 global_variable_isIOS=isiOS;
+	 var idpara = obj.elementid || "";
+	 var gidPara = (!idpara) ? "" : jQuery("#"+idpara).val();
+	 var url = serverPath + "/common_upload.do?method=androidUpload&gid="+gidPara+"&maxcount="+"3";
+		
+	if(sfAndroid==true || sfAndroid=="true"){//Android
+	    //当方法不存在时切换为普通文件上传
+		if(typeof(MobileJavaApi) =='undefined'){
+            jQuery("#file").click();
+        }else{
+            MobileJavaApi.webviewFileUpload(url,'true');
+        }
+	}else if(isiOS==true || isiOS=="true"){//IOS
+        //当方法不存在时切换为普通文件上传
+        if(typeof(window.webkit) == 'undefined'){
+            jQuery("#file").click();
+        }else{
+            window.webkit.messageHandlers.uploadPhoto.postMessage(url);
+        }
+	}else{//其他系统
+		//window.webkit.messageHandlers.uploadPhoto.postMessage("");
+		jQuery("#file").click();
+		//jQuery("#file").attr('flag',obj.id);
+	}
+	//myscroll.refresh();//增加附件导致页面高度变化，需刷新滚动条
+}
+//IOS(new)图片上传回调函数
+function setImageWithPath(arguments){
+	var para = JSON.parse(arguments);
+	if(!para['gid'] || para['result'] != '0'){
+	    msg = "上传失败！";
+	    if(para['result']=='-2'){
+	        msg="图片数量已达上限！";
+        }else if(para['result']=='-99'){
+            msg="文件上传路径不存在！";
+        }
+		adderror(msg);
+		return false;
+	}
+	jQuery("#"+obj.elementid).val(para['gid']);
+	afterFileUpload(para['gid']);
+	
+}
+function uploadfileMain(obj1){
+	obj = obj1;
+   var ywzdvalue = (document.getElementById(obj.elementid)).value || "";//获取业务字段value是否为空
+ 
+   //不为空，直接从后台返回附件信息到前台页面
+   if( ywzdvalue != null && jQuery.trim(ywzdvalue) != ""){
+	   afterFileUpload(jQuery.trim(ywzdvalue));
+   }
+   if(obj.type=='edit'){
+	   jQuery("#file").change(function(){
+		   showview();
+	   });
+   }
+}
+
+/**
+ * 上传完成，安卓(old)手机端上传回调方法
+ * @param path
+ * @return
+ */
+function uploadFinish(arguments){
+	
+	setImageWithPath(arguments);
+	
+//	var para = JSON.parse(arguments);
+//	if(!para['gid'] || data['result'] != '0'){
+//		adderror('文件未上传成功！');
+//		return false;
+//	}
+//	if(path=="countOutSize"){//文件数量超过3个
+//		adderror('上传文件数超过最大值3个！');
+//		return false;
+//	}
+//	jQuery("#"+obj.elementid).val(para['gid']);
+//	afterFileUpload(para['gid']);
+}
+
+
+/**
+ * 浏览器上传方法
+ * 修改：何爽1730 增加移动端附件上传参数（不影响之前的功能的前提下）
+ * @param maxSize 文件大小 accept文件格式png|ico| maxcount 文件数量
+ * @return
+ */
+function showview(maxSize,accept,maxcount){
+    //默认参数
+    var defaultargs = {
+        maxsize:10,
+        accept:'jpg|jpeg|gif|png|bmp',
+        gid:jQuery("#"+obj.elementid).val(),
+        maxcount:3,
+        elementid:obj.elementid
+    };
+
+	var file = jQuery("#file").val();
+	if(file == "" || file == null){
+		return false;
+	}
+    var fileType = null;
+	if(maxSize != null){
+	    defaultargs.maxsize = maxSize;
+    }
+	if(accept != null && accept.length > 0){
+	    defaultargs.accept = accept;
+	    fileType = "."+accept.replace(/\|/g,".");
+    }
+	if(maxcount != null && maxcount > 0){
+	    defaultargs.maxcount = maxcount
+    }
+	if(fileType == null){
+        fileType = ".jpg.jpeg.gif.png.bmp.doc.docx.txt";
+    }
+	if (-1 == fileType.indexOf(file.substr(file.indexOf('.')).toLowerCase())) {
+		adderror('格式应为：'+fileType);
+		return false;
+	}
+	jQuery(".main_but").hide();
+	loadingShow();
+	//var data = {xh:jQuery("#xh").val(),xmdm:jQuery("#xmdm").val()};
+	
+	//var elementid = elementid;
+//	var fid = jQuery(obj).attr("fid");
+//	if(fid != null && fid != ""){
+//		jQuery
+//		.getJSON(
+//				"common_upload.do?method=asyncDelete&fid="
+//						+ fid
+//						+ "&t="
+//						+ new Date()
+//								.getTime(),
+//				{},
+//				function() {
+//					jQuery(
+//							obj)
+//							.find(".imgpath")
+//							.attr("src","");
+//					jQuery(
+//							obj).attr("fid","");
+//				});
+//	}
+
+	var url = "common_upload.do?method=asyncUpload&t="
+		+ new Date().getTime()
+		+ '&gid='
+		+ defaultargs['gid']
+		+ '&maxsize='
+		+ defaultargs['maxsize']
+		+ '&accept='
+		+ encodeURI(defaultargs['accept'])
+		+ '&maxcount='
+		+ defaultargs['maxcount'];
+	jQuery
+			.ajaxFileUpload( {
+				url : url,
+				secureuri : false,
+				fileElementId : 'file',
+				async: false,
+				dataType : "json",
+			success : function(data,
+					status) {
+				if (data['result'] == '-1') {
+					loadingHide();
+					jQuery(".main_but").show();
+					adderror('提示: 文件大小超过指定范围' + defaultargs['maxsize'] + 'M!');
+					return false;
+				} else if (data['result'] == '-2') {
+					loadingHide();
+					jQuery(".main_but").show();
+					adderror('提示: 上传文件数超过最大值' + defaultargs['maxcount'] + '个!');
+					return false;
+				} else if (data['result'] == '-99') {
+					loadingHide();
+					jQuery(".main_but").show();
+					adderror('提示: 附件上传配置不正确,请联系管理员!');
+					return false;
+				} else {
+//					jQuery(obj).attr('fid',data['fid']);
+					var gidobj = document.getElementById(obj.elementid);
+					if(jQuery(gidobj).val() == null || jQuery.trim(jQuery(gidobj).val()) == ""){
+						jQuery(gidobj).val(data['gid']);
+					}
+					//defaultargs['gid'] = data['gid'];
+					loadingHide();
+					jQuery(".main_but").show();
+					if(jQuery(gidobj).val() != null && jQuery(gidobj).val() != ""){
+						afterFileUpload(jQuery.trim(jQuery(gidobj).val()),obj);
+					}
+				}
+			}
+		});
+
+}		
+function loadingShow(){
+	jQuery(".loding").show();
+	jQuery("#image").hide();
+}
+function loadingHide(){
+	jQuery(".loding").hide();
+	jQuery("#image").show();
+}
+
+
+function afterFileUpload(gid){
+	jQuery
+	.getJSON(
+			"common_upload.do?method=asyncQuery&gid="
+					+ gid
+					+ "&t=" + new Date().getTime(),
+			{},
+			function(data) {
+				if(obj.appendId){
+					jQuery("#"+obj.appendId).html("");
+				}else{
+					jQuery("#image").html("");
+				}
+				jQuery
+						.each(
+								data,
+								function(i, item) {
+									var v = item['originalname'];var c= "<p style='padding:3px;'>"+v+"</p>";/*, a = jQuery('<span class="MultiFile-title">' + v + '</span>'),*/var  b = "";
+									if(obj.type == 'view'){
+										if("png|gif|jpg".indexOf(item['ext']) != -1){
+											var href="<a style='margin-left:5px'  href='common_upload.do?method=ckfjzp&fid="+item['fid']+"'>查看</a>"
+										}else{
+											var href="<a style='margin-left:5px'  href='common_upload.do?method=asyncDownload&fid="+item['fid']+"'>查看</a>";
+										}
+										
+										b = jQuery(href);
+										
+									}else{
+									     b = jQuery('<a style="margin-left:5px" href="javascript:void(0)" >删除</a>');
+									 	b
+										.click(function() {
+											var _this = this;
+											jQuery
+													.getJSON(
+															"common_upload.do?method=asyncDelete&fid="
+																	+ item['fid']
+																	+ "&t="
+																	+ new Date()
+																			.getTime(),
+															{},
+															function() {
+																jQuery(
+																		_this).parent()
+																		.remove();
+																if(jQuery("#image").find("p").length == 0){
+																	jQuery("#"+obj.elementid).val("");
+																}
+																
+															});
+										});
+									}
+									if(obj.appendId){
+										jQuery("#"+obj.appendId).append(jQuery(c).append(b));
+									}else{
+										jQuery("#image").append(jQuery(c).append(b));
+									}
+									
+								    jQuery("#"+obj.elementid).val(item["gid"]);
+								    if(myscroll){
+										myscroll.refresh();
+									}
+								})
+								if(obj.appendId){
+									if(jQuery("#"+obj.appendId).find("p").length == 0){
+										jQuery("#"+obj.elementid).val("");
+									}
+								}else{
+									if(jQuery("#image").find("p").length == 0){
+										jQuery("#"+obj.elementid).val("");
+									}
+								}
+							
+			})
+}
+
+function uploadFileQuery(gid,elementid,appendId){
+	jQuery
+	.getJSON(
+			"common_upload.do?method=asyncQuery&gid="
+					+ gid
+					+ "&t=" + new Date().getTime(),
+			{},
+			function(data) {
+				if(appendId){
+					jQuery("#"+appendId).html("");
+				}else{
+					jQuery("#image").html("");
+				}
+				jQuery
+						.each(
+								data,
+								function(i, item) {
+									var v = item['originalname'];var c= "<p style='padding:3px;'>"+v+"</p>";/*, a = jQuery('<span class="MultiFile-title">' + v + '</span>'),*/var  b = "";
+									
+									if("png|gif|jpg".indexOf(item['ext']) != -1){
+										var href="<a style='margin-left:5px'  href='common_upload.do?method=ckfjzp&fid="+item['fid']+"'>查看</a>"
+									}else{
+										var href="<a style='margin-left:5px'  href='common_upload.do?method=asyncDownload&fid="+item['fid']+"'>查看</a>";
+									}
+									
+									b = jQuery(href);
+										
+									if(appendId){
+										jQuery("#"+appendId).append(jQuery(c).append(b));
+									}else{
+										jQuery("#image").append(jQuery(c).append(b));
+									}
+									
+								    jQuery("#"+elementid).val(item["gid"]);
+								    if(myscroll){
+										myscroll.refresh();
+									}
+								})
+								if(appendId){
+									if(jQuery("#"+appendId).find("p").length == 0){
+										jQuery("#"+elementid).val("");
+									}
+								}else{
+									if(jQuery("#image").find("p").length == 0){
+										jQuery("#"+elementid).val("");
+									}
+								}
+							
+			})
+}

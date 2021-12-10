@@ -1,0 +1,142 @@
+function returnClient(returnClient) {
+	var quitStr = returnClient;
+	if (quitStr == null) {
+		quitStr = "returnClient";
+	}
+	if (clientType == "1") {
+		$("#" + quitStr).click(function() {
+			Quit();
+		});
+	}
+}
+
+function Quit() {
+	MobileJavaApi.Quit();
+}
+
+function GoBack() {
+    //全局返回事件，如果android调用方法失败或异常则使用常规返回上一页方法
+    var sfAndroid = window.navigator.userAgent.toLowerCase().match(/android/i) == "android";
+	if(sfAndroid==true || sfAndroid=="true"){
+		try{
+            MobileJavaApi.GoBack();
+        }catch (e) {
+            history.go(-1);
+        }
+	}else{
+		history.go(-1);
+	}
+}
+
+function getXqmc(xqdm, xqList) {
+	var xqmc = xqdm;
+	if (xqList == null || xqList.length == 0) {
+		return xqmc;
+	}
+	for ( var i = 0; i < xqList.length; i++) {
+		var o = xqList[i];
+		var curXqdm = o.xqdm;
+		if (xqdm == curXqdm) {
+			xqmc = o.xqmc;
+			break;
+		}
+	}
+	return xqmc;
+}
+
+function toPage(url) {
+	if(myscroll != null){
+		try{
+		myscroll.destroy();
+		}catch(ex){}
+		myscroll = null;
+	}
+	
+	var href = stylePath + "/" + url;
+	if (url.indexOf("?") > -1) {
+		href += "&";
+	} else {
+		href += "?";
+	}
+	href += "timestamp=" + new Date().getTime();
+	 setTimeout(function(){		
+		location.href = href;
+	 },500 );	
+}
+
+function getNullDataTip(sTip){
+	
+	if ($('#emptyDiv').size() > 0){
+		return null;
+	}
+	
+	if(sTip == null){
+		sTip = "当前无记录！";
+	}
+	var sHtml = "";
+	sHtml += "<div class='list2 list3' id='emptyDiv'>";
+	sHtml += "<ul class='ul_noborder'>";
+	sHtml += "<li><p style='font:normal 15px/15px \"microsoft YaHei\";margin-left: 0px'>"+sTip+"</p></li>";
+	sHtml += "</ul>";
+	sHtml += "</div>";
+	return sHtml;
+}
+
+function connectWebViewJavascriptBridge(callback) {
+	
+	if (window.WebViewJavascriptBridge) {
+		callback(WebViewJavascriptBridge)
+	} else {
+		document.addEventListener('WebViewJavascriptBridgeReady', function() {
+			callback(WebViewJavascriptBridge)
+		}, false)
+	}
+}
+
+function CallPhone(number){
+    MobileJavaApi.CallPhone(number);   
+ }
+
+/*
+ * 获取本周及上周开始结束时间
+ * 上周的开始时间
+ * console.log(getTime(7));
+ * 上周的结束时间
+ * console.log(getTime(1));
+ * 本周的开始时间
+ * console.log(getTime(0));
+ * 本周的结束时间
+ * console.log(getTime(-6));
+ */
+function getTime(n){
+	var now=new Date();
+	var year=now.getFullYear();
+	//因为月份是从0开始的,所以获取这个月的月份数要加1才行
+	var month=now.getMonth()+1;
+	var date=now.getDate();
+	var day=now.getDay();
+	console.log(date);
+	//判断是否为周日,如果不是的话,就让今天的day-1(例如星期二就是2-1)
+	if(day!==0){
+		n=n+(day-1);
+	}else{
+		n=n+day;
+	}
+	if(day){
+		//这个判断是为了解决跨年的问题
+		if(month>1){
+			month=month;
+		}else{
+		//这个判断是为了解决跨年的问题,月份是从0开始的
+			year=year-1;
+			month=12;
+		}
+	}
+	now.setDate(now.getDate()-n);
+	year=now.getFullYear();
+	month=now.getMonth()+1;
+	date=now.getDate();
+	console.log(n);
+	s=year+"-"+(month<10?('0'+month):month)+"-"+(date<10?('0'+date):date);
+	return s;
+}
